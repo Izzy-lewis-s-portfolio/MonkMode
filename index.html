@@ -1,0 +1,2367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Isa's Monk Mode</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --white: #fefefe;
+      --off-white: #f8f7f4;
+      --warm-gray: #e8e6e1;
+      --text-primary: #1a1a18;
+      --text-secondary: #6b6963;
+      --accent: #c4a77d;
+      --check-green: #7a9e7e;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html, body {
+      height: 100%;
+    }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--white);
+      min-height: 100vh;
+      color: var(--text-primary);
+      overflow-x: hidden;
+    }
+
+    /* Subtle paper texture */
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+      opacity: 0.02;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .container {
+      position: relative;
+      z-index: 1;
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 40px 80px 40px;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .header {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      align-items: start;
+      gap: 40px;
+      margin-bottom: 30px;
+      flex-shrink: 0;
+    }
+
+    /* Non-negotiable List */
+    .non-negotiable {
+      animation: fadeSlideIn 0.8s ease-out;
+    }
+
+    .non-negotiable h2 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.1rem;
+      font-weight: 500;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--text-secondary);
+      margin-bottom: 28px;
+      position: relative;
+      padding-bottom: 12px;
+    }
+
+    .non-negotiable h2::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 40px;
+      height: 1px;
+      background: var(--accent);
+    }
+
+    .checklist {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .checklist li {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      font-size: 0.95rem;
+      color: var(--text-primary);
+      opacity: 0;
+      animation: fadeSlideIn 0.6s ease-out forwards;
+    }
+
+    .checklist li:nth-child(1) { animation-delay: 0.2s; }
+    .checklist li:nth-child(2) { animation-delay: 0.3s; }
+    .checklist li:nth-child(3) { animation-delay: 0.4s; }
+    .checklist li:nth-child(4) { animation-delay: 0.5s; }
+    .checklist li:nth-child(5) { animation-delay: 0.6s; }
+
+    .checkbox {
+      width: 20px;
+      height: 20px;
+      border: 1.5px solid var(--warm-gray);
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      background: var(--white);
+      transition: all 0.3s ease;
+    }
+
+    .checkbox.checked {
+      background: var(--check-green);
+      border-color: var(--check-green);
+    }
+
+    .checkbox svg {
+      width: 12px;
+      height: 12px;
+      stroke: var(--white);
+      stroke-width: 2.5;
+      fill: none;
+      opacity: 0;
+      transform: scale(0.5);
+      transition: all 0.2s ease;
+    }
+
+    .checkbox.checked svg {
+      opacity: 1;
+      transform: scale(1);
+    }
+
+    .checkbox {
+      cursor: pointer;
+    }
+
+    .checklist li span {
+      flex: 1;
+      outline: none;
+      padding: 4px 8px;
+      margin: -4px -8px;
+      border-radius: 4px;
+      transition: background 0.2s ease;
+    }
+
+    .checklist li span:hover {
+      background: var(--off-white);
+    }
+
+    .checklist li span:focus {
+      background: var(--off-white);
+      box-shadow: 0 0 0 2px var(--accent);
+    }
+
+    .checklist li span[contenteditable="true"]:empty::before {
+      content: 'Type something...';
+      color: var(--text-secondary);
+      opacity: 0.6;
+    }
+
+    .delete-btn {
+      opacity: 0;
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 4px;
+      color: var(--text-secondary);
+      transition: all 0.2s ease;
+      border-radius: 4px;
+    }
+
+    .checklist li:hover .delete-btn {
+      opacity: 1;
+    }
+
+    .delete-btn:hover {
+      color: #c45c5c;
+      background: rgba(196, 92, 92, 0.1);
+    }
+
+    .delete-btn svg {
+      width: 16px;
+      height: 16px;
+      stroke: currentColor;
+      stroke-width: 2;
+      fill: none;
+    }
+
+    .add-item-btn {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 20px;
+      padding: 10px 16px;
+      background: none;
+      border: 1.5px dashed var(--warm-gray);
+      border-radius: 8px;
+      color: var(--text-secondary);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .add-item-btn:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: rgba(196, 167, 125, 0.05);
+    }
+
+    .add-item-btn svg {
+      width: 16px;
+      height: 16px;
+      stroke: currentColor;
+      stroke-width: 2;
+      fill: none;
+    }
+
+    /* Daily Schedule - Now View */
+    .daily-schedule {
+      animation: fadeSlideIn 0.8s ease-out 0.3s both;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+    }
+
+    .schedule-container {
+      display: flex;
+      flex: 1;
+      gap: 0;
+      background: var(--off-white);
+      border-radius: 16px;
+      overflow: hidden;
+      border: 1px solid var(--warm-gray);
+    }
+
+    /* Time Column */
+    .time-column {
+      width: 140px;
+      background: var(--text-primary);
+      color: var(--white);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 30px 20px;
+      flex-shrink: 0;
+    }
+
+    .current-date {
+      font-size: 0.75rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      opacity: 0.7;
+      margin-bottom: 8px;
+    }
+
+    .current-time {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 2.5rem;
+      font-weight: 500;
+      letter-spacing: 0.02em;
+    }
+
+    .current-period {
+      font-size: 1rem;
+      opacity: 0.7;
+      margin-top: 4px;
+    }
+
+    .time-nav {
+      display: flex;
+      gap: 8px;
+      margin-top: 20px;
+    }
+
+    .time-nav button {
+      background: rgba(255,255,255,0.1);
+      border: none;
+      cursor: pointer;
+      padding: 8px;
+      color: var(--white);
+      border-radius: 6px;
+      transition: all 0.2s ease;
+    }
+
+    .time-nav button:hover {
+      background: rgba(255,255,255,0.2);
+    }
+
+    .time-nav svg {
+      width: 16px;
+      height: 16px;
+      stroke: currentColor;
+      stroke-width: 2;
+      fill: none;
+    }
+
+    /* Content Area */
+    .schedule-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      background: var(--white);
+    }
+
+    .content-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 24px;
+      border-bottom: 1px solid var(--warm-gray);
+    }
+
+    .content-header h3 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1rem;
+      font-weight: 500;
+      color: var(--text-secondary);
+      letter-spacing: 0.1em;
+    }
+
+    .view-toggle {
+      display: flex;
+      gap: 4px;
+    }
+
+    .view-toggle button {
+      background: none;
+      border: 1px solid var(--warm-gray);
+      padding: 6px 12px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .view-toggle button:first-child {
+      border-radius: 6px 0 0 6px;
+    }
+
+    .view-toggle button:last-child {
+      border-radius: 0 6px 6px 0;
+    }
+
+    .view-toggle button.active {
+      background: var(--text-primary);
+      border-color: var(--text-primary);
+      color: var(--white);
+    }
+
+    .view-toggle button:hover:not(.active) {
+      background: var(--off-white);
+    }
+
+    /* Now Block - Big typing area */
+    .now-block {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      padding: 24px;
+      overflow-y: auto;
+    }
+
+    .now-content-split {
+      flex: 1;
+      display: flex;
+      gap: 0;
+      min-height: 0;
+    }
+
+    .now-textarea {
+      flex: 1;
+      border: none;
+      background: transparent;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 1.1rem;
+      line-height: 1.8;
+      color: var(--text-primary);
+      resize: none;
+      outline: none;
+      padding-right: 24px;
+    }
+
+    .now-textarea::placeholder {
+      color: var(--text-secondary);
+      opacity: 0.5;
+    }
+
+    .now-sidebar {
+      width: 220px;
+      border-left: 1px solid var(--warm-gray);
+      padding-left: 24px;
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+    }
+
+    .sidebar-header {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 0.85rem;
+      font-weight: 500;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-secondary);
+      margin-bottom: 12px;
+    }
+
+    .sidebar-notes {
+      flex: 1;
+      border: none;
+      background: transparent;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.9rem;
+      line-height: 1.7;
+      color: var(--text-secondary);
+      resize: none;
+      outline: none;
+    }
+
+    .sidebar-notes::placeholder {
+      color: var(--text-secondary);
+      opacity: 0.4;
+    }
+
+    /* Events list for the current time */
+    .now-events {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 16px;
+      min-height: 0;
+    }
+
+    .now-event {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 14px;
+      background: var(--text-primary);
+      color: var(--white);
+      font-size: 0.9rem;
+      border-radius: 6px;
+    }
+
+    .now-event.green { background: var(--check-green); }
+    .now-event.gold { background: var(--accent); }
+    .now-event.red { background: #c45c5c; }
+
+    .now-event .delete-event {
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 0;
+      color: inherit;
+      opacity: 0.6;
+      transition: opacity 0.2s ease;
+    }
+
+    .now-event .delete-event:hover {
+      opacity: 1;
+    }
+
+    .now-event .delete-event svg {
+      width: 14px;
+      height: 14px;
+      stroke: currentColor;
+      stroke-width: 2;
+      fill: none;
+    }
+
+    /* Day View */
+    .day-view {
+      flex: 1;
+      display: none;
+      flex-direction: column;
+      overflow-y: auto;
+    }
+
+    .day-view.active {
+      display: flex;
+    }
+
+    .now-block.active {
+      display: flex;
+    }
+
+    .now-block:not(.active) {
+      display: none;
+    }
+
+    .hour-row {
+      display: flex;
+      border-bottom: 1px solid var(--warm-gray);
+      min-height: 50px;
+    }
+
+    .hour-row:last-child {
+      border-bottom: none;
+    }
+
+    .hour-label {
+      width: 70px;
+      padding: 12px;
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      text-align: right;
+      flex-shrink: 0;
+      background: var(--off-white);
+    }
+
+    .hour-row.current .hour-label {
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    .hour-content {
+      flex: 1;
+      padding: 8px 16px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      align-items: flex-start;
+      cursor: pointer;
+      transition: background 0.15s ease;
+    }
+
+    .hour-content:hover {
+      background: var(--off-white);
+    }
+
+    .hour-row.current .hour-content {
+      background: rgba(196, 167, 125, 0.1);
+    }
+
+    .hour-event {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      background: var(--text-primary);
+      color: var(--white);
+      font-size: 0.8rem;
+      border-radius: 4px;
+    }
+
+    .hour-event.green { background: var(--check-green); }
+    .hour-event.gold { background: var(--accent); }
+    .hour-event.red { background: #c45c5c; }
+
+    .hour-event .delete-event {
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 0;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+
+    .hour-event:hover .delete-event {
+      opacity: 1;
+    }
+
+    .hour-event .delete-event svg {
+      width: 12px;
+      height: 12px;
+      stroke: currentColor;
+      stroke-width: 2;
+      fill: none;
+    }
+
+    .hour-input {
+      border: none;
+      background: var(--off-white);
+      padding: 6px 10px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.8rem;
+      border-radius: 4px;
+      outline: none;
+      width: 140px;
+    }
+
+    .hour-input:focus {
+      box-shadow: 0 0 0 2px var(--accent);
+    }
+
+    /* Month View */
+    .month-view {
+      flex: 1;
+      display: none;
+      flex-direction: column;
+      padding: 20px 24px;
+      overflow-y: auto;
+    }
+
+    .month-view.active {
+      display: flex;
+    }
+
+    .month-header {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 20px;
+      margin-bottom: 20px;
+    }
+
+    .month-header h3 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.2rem;
+      font-weight: 500;
+      color: var(--text-primary);
+      letter-spacing: 0.08em;
+      min-width: 180px;
+      text-align: center;
+    }
+
+    .month-nav {
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 8px;
+      color: var(--text-secondary);
+      transition: all 0.2s ease;
+      border-radius: 6px;
+    }
+
+    .month-nav:hover {
+      color: var(--text-primary);
+      background: var(--off-white);
+    }
+
+    .month-nav svg {
+      width: 18px;
+      height: 18px;
+      stroke: currentColor;
+      stroke-width: 2;
+      fill: none;
+    }
+
+    .month-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 4px;
+      flex: 1;
+    }
+
+    .month-day-header {
+      text-align: center;
+      font-size: 0.75rem;
+      font-weight: 500;
+      color: var(--text-secondary);
+      padding: 8px 0;
+      letter-spacing: 0.05em;
+    }
+
+    #month-days {
+      display: contents;
+    }
+
+    .month-day {
+      aspect-ratio: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      padding: 8px 4px;
+      font-size: 0.85rem;
+      color: var(--text-primary);
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      background: var(--off-white);
+      min-height: 60px;
+    }
+
+    .month-day:hover {
+      background: var(--warm-gray);
+    }
+
+    .month-day.other-month {
+      color: var(--text-secondary);
+      opacity: 0.4;
+      background: transparent;
+    }
+
+    .month-day.today {
+      background: var(--text-primary);
+      color: var(--white);
+    }
+
+    .month-day.today:hover {
+      background: #2a2a28;
+    }
+
+    .month-day.selected {
+      background: var(--accent);
+      color: var(--white);
+    }
+
+    .month-day-number {
+      font-weight: 500;
+      margin-bottom: 4px;
+    }
+
+    .month-day-indicator {
+      display: flex;
+      gap: 2px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .month-day-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--check-green);
+    }
+
+    .month-day.today .month-day-dot,
+    .month-day.selected .month-day-dot {
+      background: var(--white);
+    }
+
+    .month-day-dot.has-event {
+      background: var(--accent);
+    }
+
+    /* Main Title */
+    .title-section {
+      text-align: center;
+      padding-top: 20px;
+      animation: fadeIn 1s ease-out;
+    }
+
+    .title-section h1 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 2.8rem;
+      font-weight: 300;
+      letter-spacing: 0.08em;
+      color: var(--text-primary);
+      line-height: 1.2;
+    }
+
+    .title-section h1 span {
+      display: block;
+      font-size: 1rem;
+      font-weight: 500;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-top: 8px;
+    }
+
+    /* Balance Pie Chart */
+    .balance-section {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      animation: fadeSlideInRight 0.8s ease-out;
+    }
+
+    .balance-section h2 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.1rem;
+      font-weight: 500;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--text-secondary);
+      margin-bottom: 24px;
+      position: relative;
+      padding-bottom: 12px;
+    }
+
+    .balance-section h2::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      right: 0;
+      width: 40px;
+      height: 1px;
+      background: var(--accent);
+    }
+
+    .pie-chart-container {
+      position: relative;
+      width: 160px;
+      height: 160px;
+      margin-bottom: 12px;
+      cursor: pointer;
+      transition: transform 0.2s ease;
+    }
+
+    .pie-chart-container:hover {
+      transform: scale(1.03);
+    }
+
+    .pie-hint {
+      font-size: 0.7rem;
+      color: var(--text-secondary);
+      opacity: 0.6;
+      text-align: right;
+      margin-bottom: 8px;
+    }
+
+    .month-label {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      text-align: right;
+      letter-spacing: 0.05em;
+    }
+
+    .pie-chart {
+      width: 100%;
+      height: 100%;
+      transform: rotate(-90deg);
+    }
+
+    .pie-bg {
+      fill: none;
+      stroke: var(--warm-gray);
+      stroke-width: 24;
+    }
+
+    .pie-income {
+      fill: none;
+      stroke: var(--check-green);
+      stroke-width: 24;
+      stroke-dasharray: 0 502.65;
+      stroke-linecap: round;
+      transition: stroke-dasharray 0.6s ease-out;
+    }
+
+    .pie-expenses {
+      fill: none;
+      stroke: #c45c5c;
+      stroke-width: 24;
+      stroke-dasharray: 0 502.65;
+      stroke-linecap: round;
+      transition: stroke-dasharray 0.6s ease-out;
+    }
+
+    .pie-center {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .pie-balance-label {
+      font-size: 0.7rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-secondary);
+    }
+
+    .pie-balance-amount {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 1.4rem;
+      font-weight: 500;
+      color: var(--text-primary);
+    }
+
+    .pie-balance-amount.positive {
+      color: var(--check-green);
+    }
+
+    .pie-balance-amount.negative {
+      color: #c45c5c;
+    }
+
+    .balance-inputs {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      width: 100%;
+    }
+
+    .balance-input-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .balance-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .income-dot {
+      background: var(--check-green);
+    }
+
+    .expenses-dot {
+      background: #c45c5c;
+    }
+
+    .balance-input-group label {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      width: 70px;
+    }
+
+    .input-wrapper {
+      display: flex;
+      align-items: center;
+      background: var(--off-white);
+      border: 1px solid var(--warm-gray);
+      border-radius: 6px;
+      padding: 8px 12px;
+      transition: all 0.2s ease;
+      flex: 1;
+    }
+
+    .input-wrapper:focus-within {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(196, 167, 125, 0.1);
+    }
+
+    .input-wrapper .currency {
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+      margin-right: 4px;
+    }
+
+    .input-wrapper input {
+      border: none;
+      background: none;
+      outline: none;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.95rem;
+      color: var(--text-primary);
+      width: 100%;
+    }
+
+    .input-wrapper input::placeholder {
+      color: var(--text-secondary);
+      opacity: 0.5;
+    }
+
+    /* Hide number input spinners */
+    .input-wrapper input::-webkit-outer-spin-button,
+    .input-wrapper input::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+
+    .input-wrapper input[type=number] {
+      -moz-appearance: textfield;
+    }
+
+    /* Modal */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(26, 26, 24, 0.6);
+      backdrop-filter: blur(4px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.3s ease;
+    }
+
+    .modal-overlay.active {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .modal {
+      background: var(--white);
+      border-radius: 16px;
+      padding: 32px;
+      width: 90%;
+      max-width: 420px;
+      max-height: 90vh;
+      overflow-y: auto;
+      position: relative;
+      transform: translateY(20px) scale(0.95);
+      transition: transform 0.3s ease;
+      box-shadow: 0 24px 48px rgba(0,0,0,0.15);
+    }
+
+    .modal-overlay.active .modal {
+      transform: translateY(0) scale(1);
+    }
+
+    .modal-close {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 8px;
+      color: var(--text-secondary);
+      transition: color 0.2s ease;
+      border-radius: 8px;
+    }
+
+    .modal-close:hover {
+      color: var(--text-primary);
+      background: var(--off-white);
+    }
+
+    .modal-close svg {
+      width: 20px;
+      height: 20px;
+      stroke: currentColor;
+      stroke-width: 2;
+      fill: none;
+    }
+
+    /* Calendar */
+    .calendar-section {
+      margin-bottom: 24px;
+    }
+
+    .calendar-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+
+    .calendar-header h3 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.2rem;
+      font-weight: 500;
+      color: var(--text-primary);
+      letter-spacing: 0.05em;
+    }
+
+    .calendar-nav {
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 8px;
+      color: var(--text-secondary);
+      transition: all 0.2s ease;
+      border-radius: 8px;
+    }
+
+    .calendar-nav:hover {
+      color: var(--text-primary);
+      background: var(--off-white);
+    }
+
+    .calendar-nav svg {
+      width: 18px;
+      height: 18px;
+      stroke: currentColor;
+      stroke-width: 2;
+      fill: none;
+    }
+
+    .calendar-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 4px;
+    }
+
+    .calendar-day-header {
+      text-align: center;
+      font-size: 0.75rem;
+      font-weight: 500;
+      color: var(--text-secondary);
+      padding: 8px 0;
+      letter-spacing: 0.05em;
+    }
+
+    #calendar-days {
+      display: contents;
+    }
+
+    .calendar-day {
+      aspect-ratio: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.9rem;
+      color: var(--text-primary);
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      position: relative;
+    }
+
+    .calendar-day:hover {
+      background: var(--off-white);
+    }
+
+    .calendar-day.other-month {
+      color: var(--text-secondary);
+      opacity: 0.4;
+    }
+
+    .calendar-day.today {
+      background: var(--text-primary);
+      color: var(--white);
+    }
+
+    .calendar-day.today:hover {
+      background: #2a2a28;
+    }
+
+    .calendar-day.selected {
+      background: var(--accent);
+      color: var(--white);
+    }
+
+    .calendar-day.has-data::after {
+      content: '';
+      position: absolute;
+      bottom: 4px;
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      background: var(--check-green);
+    }
+
+    .calendar-day.has-data.has-expenses::after {
+      background: linear-gradient(90deg, var(--check-green) 50%, #c45c5c 50%);
+      width: 8px;
+      border-radius: 2px;
+    }
+
+    .calendar-day.selected::after,
+    .calendar-day.today::after {
+      background: var(--white);
+    }
+
+    /* Entry Section */
+    .entry-section {
+      padding: 20px 0;
+      border-top: 1px solid var(--warm-gray);
+      border-bottom: 1px solid var(--warm-gray);
+      margin-bottom: 20px;
+    }
+
+    .entry-section h4 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1rem;
+      font-weight: 500;
+      color: var(--text-secondary);
+      margin-bottom: 16px;
+      letter-spacing: 0.05em;
+    }
+
+    /* Monthly Summary */
+    .monthly-summary {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .summary-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .summary-label {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+    }
+
+    .summary-value {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.95rem;
+      font-weight: 500;
+      color: var(--text-primary);
+    }
+
+    .summary-value.income {
+      color: var(--check-green);
+    }
+
+    .summary-value.expenses {
+      color: #c45c5c;
+    }
+
+    .summary-row.total {
+      padding-top: 12px;
+      border-top: 1px solid var(--warm-gray);
+      margin-top: 4px;
+    }
+
+    .summary-row.total .summary-label {
+      font-weight: 500;
+      color: var(--text-primary);
+    }
+
+    .summary-row.total .summary-value {
+      font-size: 1.1rem;
+    }
+
+    .summary-row.total .summary-value.positive {
+      color: var(--check-green);
+    }
+
+    .summary-row.total .summary-value.negative {
+      color: #c45c5c;
+    }
+
+    /* Animations */
+    @keyframes fadeSlideIn {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes fadeSlideInRight {
+      from {
+        opacity: 0;
+        transform: translateX(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    /* Responsive */
+    @media (max-width: 1024px) {
+      .container {
+        padding: 40px;
+      }
+
+      .header {
+        grid-template-columns: 1fr;
+        gap: 50px;
+        text-align: center;
+      }
+
+      .title-section {
+        order: -1;
+      }
+
+      .non-negotiable {
+        justify-self: center;
+      }
+
+      .non-negotiable h2::after {
+        left: 50%;
+        transform: translateX(-50%);
+      }
+
+      .balance-section {
+        align-items: center;
+      }
+
+      .balance-section h2::after {
+        left: 50%;
+        right: auto;
+        transform: translateX(-50%);
+      }
+    }
+
+    @media (max-width: 600px) {
+      .title-section h1 {
+        font-size: 2rem;
+      }
+
+      .pie-chart-container {
+        width: 140px;
+        height: 140px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header class="header">
+      <!-- Non-negotiable List -->
+      <section class="non-negotiable">
+        <h2>Non-negotiable List</h2>
+        <ul class="checklist" id="checklist"></ul>
+        <button class="add-item-btn" id="add-item-btn">
+          <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+          Add item
+        </button>
+      </section>
+
+      <!-- Main Title -->
+      <section class="title-section">
+        <h1>
+          Isa's Monk Mode
+          <span>Focus · Discipline · Growth</span>
+        </h1>
+      </section>
+
+      <!-- Balance Pie Chart -->
+      <section class="balance-section">
+        <h2>Balance Overview</h2>
+        <div class="pie-chart-container" id="pie-chart-trigger">
+          <svg class="pie-chart" viewBox="0 0 200 200" id="pie-chart">
+            <circle class="pie-bg" cx="100" cy="100" r="80" />
+            <circle class="pie-income" cx="100" cy="100" r="80" id="pie-income" />
+            <circle class="pie-expenses" cx="100" cy="100" r="80" id="pie-expenses" />
+          </svg>
+          <div class="pie-center" id="pie-center">
+            <span class="pie-balance-label">Balance</span>
+            <span class="pie-balance-amount" id="balance-amount">$0</span>
+          </div>
+        </div>
+        <p class="pie-hint">Click to add entries</p>
+        <p class="month-label" id="month-label"></p>
+      </section>
+    </header>
+
+    <!-- Daily Schedule - Full Width -->
+    <section class="daily-schedule">
+      <div class="schedule-container">
+        <!-- Time Column -->
+        <div class="time-column">
+          <div class="current-date" id="current-date">DEC 24</div>
+          <div class="current-time" id="current-time">12:47</div>
+          <div class="current-period" id="current-period">PM</div>
+          <div class="time-nav">
+            <button id="prev-hour">
+              <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"></polyline></svg>
+            </button>
+            <button id="next-hour">
+              <svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"></polyline></svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Content Area -->
+        <div class="schedule-content">
+          <div class="content-header">
+            <h3 id="content-title">What's happening now</h3>
+            <div class="view-toggle">
+              <button class="active" id="now-view-btn">Now</button>
+              <button id="day-view-btn">Day</button>
+              <button id="month-view-btn">Month</button>
+            </div>
+          </div>
+
+          <!-- Now View - Big text area -->
+          <div class="now-block active" id="now-block">
+            <div class="now-events" id="now-events"></div>
+            <div class="now-content-split">
+              <textarea class="now-textarea" id="now-textarea" placeholder="What are you working on right now?"></textarea>
+              <div class="now-sidebar">
+                <div class="sidebar-header">Quick Notes</div>
+                <textarea class="sidebar-notes" id="sidebar-notes" placeholder="Little notes to yourself..."></textarea>
+              </div>
+            </div>
+          </div>
+
+          <!-- Day View - Hour by hour -->
+          <div class="day-view" id="day-view">
+            <!-- Hours will be generated by JS -->
+          </div>
+
+          <!-- Month View - Calendar grid -->
+          <div class="month-view" id="month-view">
+            <div class="month-header">
+              <button class="month-nav" id="prev-month-btn">
+                <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"></polyline></svg>
+              </button>
+              <h3 id="month-title">December 2025</h3>
+              <button class="month-nav" id="next-month-btn">
+                <svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"></polyline></svg>
+              </button>
+            </div>
+            <div class="month-grid">
+              <div class="month-day-header">Sun</div>
+              <div class="month-day-header">Mon</div>
+              <div class="month-day-header">Tue</div>
+              <div class="month-day-header">Wed</div>
+              <div class="month-day-header">Thu</div>
+              <div class="month-day-header">Fri</div>
+              <div class="month-day-header">Sat</div>
+              <div class="month-days" id="month-days"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- Balance Modal (outside container) -->
+  <div class="modal-overlay" id="balance-modal">
+    <div class="modal">
+      <button class="modal-close" id="modal-close">
+        <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+      </button>
+
+      <div class="calendar-section">
+        <div class="calendar-header">
+          <button class="calendar-nav" id="prev-month">
+            <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"></polyline></svg>
+          </button>
+          <h3 id="calendar-month-year">December 2024</h3>
+          <button class="calendar-nav" id="next-month">
+            <svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"></polyline></svg>
+          </button>
+        </div>
+        <div class="calendar-grid">
+          <div class="calendar-day-header">Su</div>
+          <div class="calendar-day-header">Mo</div>
+          <div class="calendar-day-header">Tu</div>
+          <div class="calendar-day-header">We</div>
+          <div class="calendar-day-header">Th</div>
+          <div class="calendar-day-header">Fr</div>
+          <div class="calendar-day-header">Sa</div>
+          <div id="calendar-days"></div>
+        </div>
+      </div>
+
+      <div class="entry-section" id="entry-section">
+        <h4 id="selected-date-label">Select a date</h4>
+        <div class="balance-inputs">
+          <div class="balance-input-group">
+            <div class="balance-dot income-dot"></div>
+            <label>Income</label>
+            <div class="input-wrapper">
+              <span class="currency">$</span>
+              <input type="number" id="day-income-input" placeholder="0" min="0" />
+            </div>
+          </div>
+          <div class="balance-input-group">
+            <div class="balance-dot expenses-dot"></div>
+            <label>Expenses</label>
+            <div class="input-wrapper">
+              <span class="currency">$</span>
+              <input type="number" id="day-expenses-input" placeholder="0" min="0" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="monthly-summary">
+        <div class="summary-row">
+          <span class="summary-label">Monthly Income</span>
+          <span class="summary-value income" id="monthly-income">$0</span>
+        </div>
+        <div class="summary-row">
+          <span class="summary-label">Monthly Expenses</span>
+          <span class="summary-value expenses" id="monthly-expenses">$0</span>
+        </div>
+        <div class="summary-row total">
+          <span class="summary-label">Monthly Balance</span>
+          <span class="summary-value" id="monthly-balance">$0</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Balance Chart Manager with Calendar
+    class BalanceChart {
+      constructor() {
+        // Chart elements
+        this.pieChartTrigger = document.getElementById('pie-chart-trigger');
+        this.pieIncome = document.getElementById('pie-income');
+        this.pieExpenses = document.getElementById('pie-expenses');
+        this.balanceAmount = document.getElementById('balance-amount');
+        this.monthLabel = document.getElementById('month-label');
+
+        // Modal elements
+        this.modal = document.getElementById('balance-modal');
+        this.modalClose = document.getElementById('modal-close');
+        this.calendarDays = document.getElementById('calendar-days');
+        this.calendarMonthYear = document.getElementById('calendar-month-year');
+        this.prevMonthBtn = document.getElementById('prev-month');
+        this.nextMonthBtn = document.getElementById('next-month');
+
+        // Entry elements
+        this.selectedDateLabel = document.getElementById('selected-date-label');
+        this.dayIncomeInput = document.getElementById('day-income-input');
+        this.dayExpensesInput = document.getElementById('day-expenses-input');
+        this.monthlyIncomeEl = document.getElementById('monthly-income');
+        this.monthlyExpensesEl = document.getElementById('monthly-expenses');
+        this.monthlyBalanceEl = document.getElementById('monthly-balance');
+
+        this.circumference = 2 * Math.PI * 80;
+        this.currentDate = new Date();
+        this.viewMonth = this.currentDate.getMonth();
+        this.viewYear = this.currentDate.getFullYear();
+        this.selectedDate = null;
+        this.data = this.loadData();
+
+        this.init();
+      }
+
+      init() {
+        // Modal events
+        this.pieChartTrigger.addEventListener('click', () => this.openModal());
+        this.modalClose.addEventListener('click', () => this.closeModal());
+        this.modal.addEventListener('click', (e) => {
+          if (e.target === this.modal) this.closeModal();
+        });
+
+        // Calendar navigation
+        this.prevMonthBtn.addEventListener('click', () => this.changeMonth(-1));
+        this.nextMonthBtn.addEventListener('click', () => this.changeMonth(1));
+
+        // Entry inputs
+        this.dayIncomeInput.addEventListener('input', () => this.saveDayEntry());
+        this.dayExpensesInput.addEventListener('input', () => this.saveDayEntry());
+
+        // Initial render
+        this.updateChart();
+        this.updateMonthLabel();
+      }
+
+      loadData() {
+        const saved = localStorage.getItem('monkModeBalanceData');
+        return saved ? JSON.parse(saved) : {};
+      }
+
+      saveData() {
+        localStorage.setItem('monkModeBalanceData', JSON.stringify(this.data));
+      }
+
+      getDateKey(year, month, day) {
+        return `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+      }
+
+      getMonthlyTotals(year, month) {
+        let income = 0;
+        let expenses = 0;
+
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+        for (let day = 1; day <= daysInMonth; day++) {
+          const key = this.getDateKey(year, month, day);
+          if (this.data[key]) {
+            income += this.data[key].income || 0;
+            expenses += this.data[key].expenses || 0;
+          }
+        }
+
+        return { income, expenses };
+      }
+
+      openModal() {
+        this.modal.classList.add('active');
+        // Auto-select today's date
+        const today = new Date();
+        this.viewMonth = today.getMonth();
+        this.viewYear = today.getFullYear();
+        this.selectedDate = { day: today.getDate(), month: this.viewMonth, year: this.viewYear };
+        this.renderCalendar();
+        this.loadDayEntry();
+        this.updateMonthlySummary();
+        document.body.style.overflow = 'hidden';
+      }
+
+      closeModal() {
+        this.modal.classList.remove('active');
+        document.body.style.overflow = '';
+        this.updateChart();
+      }
+
+      changeMonth(delta) {
+        this.viewMonth += delta;
+        if (this.viewMonth > 11) {
+          this.viewMonth = 0;
+          this.viewYear++;
+        } else if (this.viewMonth < 0) {
+          this.viewMonth = 11;
+          this.viewYear--;
+        }
+        this.selectedDate = null;
+        this.clearDayInputs();
+        this.renderCalendar();
+        this.updateMonthlySummary();
+      }
+
+      renderCalendar() {
+        const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
+          'July', 'August', 'September', 'October', 'November', 'December'];
+
+        this.calendarMonthYear.textContent = `${monthNames[this.viewMonth]} ${this.viewYear}`;
+
+        // Clear existing days
+        this.calendarDays.innerHTML = '';
+
+        // Get first day of month and total days
+        const firstDay = new Date(this.viewYear, this.viewMonth, 1).getDay();
+        const daysInMonth = new Date(this.viewYear, this.viewMonth + 1, 0).getDate();
+        const daysInPrevMonth = new Date(this.viewYear, this.viewMonth, 0).getDate();
+
+        const today = new Date();
+        const isCurrentMonth = this.viewMonth === today.getMonth() && this.viewYear === today.getFullYear();
+
+        // Previous month days
+        for (let i = firstDay - 1; i >= 0; i--) {
+          const day = daysInPrevMonth - i;
+          const dayEl = this.createDayElement(day, true, false);
+          this.calendarDays.appendChild(dayEl);
+        }
+
+        // Current month days
+        for (let day = 1; day <= daysInMonth; day++) {
+          const isToday = isCurrentMonth && day === today.getDate();
+          const dateKey = this.getDateKey(this.viewYear, this.viewMonth, day);
+          const dayData = this.data[dateKey];
+          const hasData = dayData && (dayData.income > 0 || dayData.expenses > 0);
+          const hasExpenses = dayData && dayData.expenses > 0;
+          const isSelected = this.selectedDate &&
+            this.selectedDate.day === day &&
+            this.selectedDate.month === this.viewMonth &&
+            this.selectedDate.year === this.viewYear;
+
+          const dayEl = this.createDayElement(day, false, isToday, hasData, hasExpenses, isSelected);
+          dayEl.addEventListener('click', () => this.selectDate(day));
+          this.calendarDays.appendChild(dayEl);
+        }
+
+        // Next month days
+        const totalCells = firstDay + daysInMonth;
+        const remainingCells = totalCells > 35 ? 42 - totalCells : 35 - totalCells;
+        for (let day = 1; day <= remainingCells; day++) {
+          const dayEl = this.createDayElement(day, true, false);
+          this.calendarDays.appendChild(dayEl);
+        }
+      }
+
+      createDayElement(day, isOtherMonth, isToday, hasData = false, hasExpenses = false, isSelected = false) {
+        const div = document.createElement('div');
+        div.className = 'calendar-day';
+        div.textContent = day;
+        if (isOtherMonth) div.classList.add('other-month');
+        if (isToday) div.classList.add('today');
+        if (hasData) div.classList.add('has-data');
+        if (hasExpenses) div.classList.add('has-expenses');
+        if (isSelected) div.classList.add('selected');
+        return div;
+      }
+
+      selectDate(day) {
+        this.selectedDate = { day, month: this.viewMonth, year: this.viewYear };
+        this.renderCalendar();
+        this.loadDayEntry();
+      }
+
+      loadDayEntry() {
+        if (!this.selectedDate) return;
+
+        const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+          'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        const { day, month, year } = this.selectedDate;
+        this.selectedDateLabel.textContent = `${monthNames[month]} ${day}, ${year}`;
+
+        const dateKey = this.getDateKey(year, month, day);
+        const dayData = this.data[dateKey] || { income: 0, expenses: 0 };
+
+        this.dayIncomeInput.value = dayData.income || '';
+        this.dayExpensesInput.value = dayData.expenses || '';
+      }
+
+      clearDayInputs() {
+        this.selectedDateLabel.textContent = 'Select a date';
+        this.dayIncomeInput.value = '';
+        this.dayExpensesInput.value = '';
+      }
+
+      saveDayEntry() {
+        if (!this.selectedDate) return;
+
+        const { day, month, year } = this.selectedDate;
+        const dateKey = this.getDateKey(year, month, day);
+
+        const income = parseFloat(this.dayIncomeInput.value) || 0;
+        const expenses = parseFloat(this.dayExpensesInput.value) || 0;
+
+        if (income === 0 && expenses === 0) {
+          delete this.data[dateKey];
+        } else {
+          this.data[dateKey] = { income, expenses };
+        }
+
+        this.saveData();
+        this.renderCalendar();
+        this.updateMonthlySummary();
+      }
+
+      updateMonthlySummary() {
+        const { income, expenses } = this.getMonthlyTotals(this.viewYear, this.viewMonth);
+        const balance = income - expenses;
+
+        this.monthlyIncomeEl.textContent = this.formatCurrency(income);
+        this.monthlyExpensesEl.textContent = this.formatCurrency(expenses);
+
+        this.monthlyBalanceEl.textContent = balance >= 0
+          ? this.formatCurrency(balance)
+          : `-${this.formatCurrency(Math.abs(balance))}`;
+
+        this.monthlyBalanceEl.className = 'summary-value';
+        if (balance > 0) this.monthlyBalanceEl.classList.add('positive');
+        else if (balance < 0) this.monthlyBalanceEl.classList.add('negative');
+      }
+
+      updateMonthLabel() {
+        const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
+          'July', 'August', 'September', 'October', 'November', 'December'];
+        const now = new Date();
+        this.monthLabel.textContent = `${monthNames[now.getMonth()]} ${now.getFullYear()}`;
+      }
+
+      updateChart() {
+        const now = new Date();
+        const { income, expenses } = this.getMonthlyTotals(now.getFullYear(), now.getMonth());
+        const total = income + expenses;
+        const balance = income - expenses;
+
+        if (total > 0) {
+          const incomeRatio = income / total;
+          const expensesRatio = expenses / total;
+
+          const incomeArc = incomeRatio * this.circumference;
+          const expensesArc = expensesRatio * this.circumference;
+
+          this.pieIncome.style.strokeDasharray = `${incomeArc} ${this.circumference}`;
+          this.pieExpenses.style.strokeDasharray = `${expensesArc} ${this.circumference}`;
+          this.pieExpenses.style.strokeDashoffset = `-${incomeArc}`;
+        } else {
+          this.pieIncome.style.strokeDasharray = `0 ${this.circumference}`;
+          this.pieExpenses.style.strokeDasharray = `0 ${this.circumference}`;
+        }
+
+        this.balanceAmount.textContent = balance >= 0
+          ? this.formatCurrency(balance)
+          : `-${this.formatCurrency(Math.abs(balance))}`;
+
+        this.balanceAmount.className = 'pie-balance-amount';
+        if (balance > 0) this.balanceAmount.classList.add('positive');
+        else if (balance < 0) this.balanceAmount.classList.add('negative');
+      }
+
+      formatCurrency(amount) {
+        return new Intl.NumberFormat('en-US', {
+          style: 'currency',
+          currency: 'USD',
+          minimumFractionDigits: 0,
+          maximumFractionDigits: 0
+        }).format(amount);
+      }
+    }
+
+    // Checklist Manager
+    class ChecklistManager {
+      constructor() {
+        this.checklist = document.getElementById('checklist');
+        this.addBtn = document.getElementById('add-item-btn');
+        this.items = this.loadItems();
+
+        this.init();
+      }
+
+      init() {
+        this.renderItems();
+        this.addBtn.addEventListener('click', () => this.addItem());
+      }
+
+      loadItems() {
+        const saved = localStorage.getItem('monkModeChecklist');
+        if (saved) {
+          return JSON.parse(saved);
+        }
+        // Default items
+        return [
+          { id: Date.now(), text: 'Morning meditation', checked: true },
+          { id: Date.now() + 1, text: 'Deep work session', checked: true },
+          { id: Date.now() + 2, text: 'Exercise', checked: true },
+          { id: Date.now() + 3, text: 'Read for 30 minutes', checked: true },
+          { id: Date.now() + 4, text: 'No phone before noon', checked: true }
+        ];
+      }
+
+      saveItems() {
+        localStorage.setItem('monkModeChecklist', JSON.stringify(this.items));
+      }
+
+      renderItems() {
+        this.checklist.innerHTML = '';
+        this.items.forEach((item, index) => {
+          const li = this.createItemElement(item, index);
+          this.checklist.appendChild(li);
+        });
+      }
+
+      createItemElement(item, index) {
+        const li = document.createElement('li');
+        li.style.animationDelay = `${0.1 + index * 0.05}s`;
+
+        li.innerHTML = `
+          <div class="checkbox ${item.checked ? 'checked' : ''}" data-id="${item.id}">
+            <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+          </div>
+          <span contenteditable="true" data-id="${item.id}">${item.text}</span>
+          <button class="delete-btn" data-id="${item.id}">
+            <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+          </button>
+        `;
+
+        // Toggle checkbox
+        const checkbox = li.querySelector('.checkbox');
+        checkbox.addEventListener('click', () => this.toggleItem(item.id));
+
+        // Edit text
+        const span = li.querySelector('span');
+        span.addEventListener('blur', (e) => this.updateItemText(item.id, e.target.textContent));
+        span.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            span.blur();
+          }
+        });
+
+        // Delete item
+        const deleteBtn = li.querySelector('.delete-btn');
+        deleteBtn.addEventListener('click', () => this.deleteItem(item.id));
+
+        return li;
+      }
+
+      addItem() {
+        const newItem = {
+          id: Date.now(),
+          text: '',
+          checked: false
+        };
+        this.items.push(newItem);
+        this.saveItems();
+        this.renderItems();
+
+        // Focus the new item
+        const spans = this.checklist.querySelectorAll('span[contenteditable]');
+        const lastSpan = spans[spans.length - 1];
+        if (lastSpan) {
+          lastSpan.focus();
+        }
+      }
+
+      toggleItem(id) {
+        const item = this.items.find(i => i.id === id);
+        if (item) {
+          item.checked = !item.checked;
+          this.saveItems();
+          this.renderItems();
+        }
+      }
+
+      updateItemText(id, text) {
+        const item = this.items.find(i => i.id === id);
+        if (item) {
+          item.text = text.trim();
+          this.saveItems();
+        }
+      }
+
+      deleteItem(id) {
+        this.items = this.items.filter(i => i.id !== id);
+        this.saveItems();
+        this.renderItems();
+      }
+    }
+
+    // Daily Schedule Manager - Now View
+    class DailySchedule {
+      constructor() {
+        // Time column elements
+        this.currentDateEl = document.getElementById('current-date');
+        this.currentTimeEl = document.getElementById('current-time');
+        this.currentPeriodEl = document.getElementById('current-period');
+        this.prevHourBtn = document.getElementById('prev-hour');
+        this.nextHourBtn = document.getElementById('next-hour');
+
+        // View toggle
+        this.nowViewBtn = document.getElementById('now-view-btn');
+        this.dayViewBtn = document.getElementById('day-view-btn');
+        this.monthViewBtn = document.getElementById('month-view-btn');
+        this.nowBlock = document.getElementById('now-block');
+        this.dayView = document.getElementById('day-view');
+        this.monthView = document.getElementById('month-view');
+        this.contentTitle = document.getElementById('content-title');
+
+        // Month view elements
+        this.monthTitle = document.getElementById('month-title');
+        this.monthDays = document.getElementById('month-days');
+        this.prevMonthBtn = document.getElementById('prev-month-btn');
+        this.nextMonthBtn = document.getElementById('next-month-btn');
+
+        // Now view elements
+        this.nowEvents = document.getElementById('now-events');
+        this.nowTextarea = document.getElementById('now-textarea');
+        this.sidebarNotes = document.getElementById('sidebar-notes');
+
+        this.currentView = 'now';
+        this.viewDateTime = new Date();
+        this.data = this.loadData();
+        this.clockInterval = null;
+        this.lastHour = new Date().getHours();
+
+        this.init();
+      }
+
+      init() {
+        // Navigation
+        this.prevHourBtn.addEventListener('click', () => this.changeHour(-1));
+        this.nextHourBtn.addEventListener('click', () => this.changeHour(1));
+
+        // View toggle
+        this.nowViewBtn.addEventListener('click', () => this.switchView('now'));
+        this.dayViewBtn.addEventListener('click', () => this.switchView('day'));
+        this.monthViewBtn.addEventListener('click', () => this.switchView('month'));
+
+        // Month navigation
+        this.prevMonthBtn.addEventListener('click', () => this.changeMonth(-1));
+        this.nextMonthBtn.addEventListener('click', () => this.changeMonth(1));
+
+        // Textarea auto-save
+        this.nowTextarea.addEventListener('input', () => this.saveNowText());
+        this.sidebarNotes.addEventListener('input', () => this.saveSidebarNotes());
+
+        // Initial render
+        this.updateTimeDisplay();
+        this.renderNowView();
+
+        // Update clock every second
+        this.clockInterval = setInterval(() => {
+          const now = new Date();
+          const currentHour = now.getHours();
+
+          // Check if hour changed
+          if (currentHour !== this.lastHour) {
+            this.lastHour = currentHour;
+            // Reset to current time and refresh view
+            this.viewDateTime = now;
+            this.updateTimeDisplay();
+            this.renderNowView();
+          } else if (this.isViewingNow()) {
+            // Just update the time display
+            this.viewDateTime = now;
+            this.updateTimeDisplay();
+          }
+        }, 1000);
+      }
+
+      loadData() {
+        const saved = localStorage.getItem('monkModeScheduleV2');
+        return saved ? JSON.parse(saved) : { notes: {}, events: {} };
+      }
+
+      saveData() {
+        localStorage.setItem('monkModeScheduleV2', JSON.stringify(this.data));
+      }
+
+      getDateKey() {
+        const d = this.viewDateTime;
+        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+      }
+
+      getHourKey() {
+        return `${this.getDateKey()}-${this.viewDateTime.getHours()}`;
+      }
+
+      isViewingNow() {
+        const now = new Date();
+        return this.viewDateTime.getHours() === now.getHours() &&
+               this.viewDateTime.getDate() === now.getDate() &&
+               this.viewDateTime.getMonth() === now.getMonth() &&
+               this.viewDateTime.getFullYear() === now.getFullYear();
+      }
+
+      changeHour(delta) {
+        this.viewDateTime = new Date(this.viewDateTime.getTime() + delta * 60 * 60 * 1000);
+        this.updateTimeDisplay();
+        this.renderNowView();
+        if (this.currentView === 'day') {
+          this.renderDayView();
+        }
+      }
+
+      updateTimeDisplay() {
+        const d = this.viewDateTime;
+        const monthNames = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN',
+          'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
+
+        this.currentDateEl.textContent = `${monthNames[d.getMonth()]} ${d.getDate()}`;
+
+        let hours = d.getHours();
+        const minutes = d.getMinutes();
+        const period = hours >= 12 ? 'PM' : 'AM';
+
+        if (hours === 0) hours = 12;
+        else if (hours > 12) hours -= 12;
+
+        this.currentTimeEl.textContent = `${hours}:${String(minutes).padStart(2, '0')}`;
+        this.currentPeriodEl.textContent = period;
+
+        // Update content title based on whether viewing now or past/future
+        if (this.isViewingNow()) {
+          this.contentTitle.textContent = "What's happening now";
+        } else {
+          const h = d.getHours();
+          const displayHour = h === 0 ? 12 : h > 12 ? h - 12 : h;
+          const p = h >= 12 ? 'PM' : 'AM';
+          this.contentTitle.textContent = `Notes for ${displayHour}:00 ${p}`;
+        }
+      }
+
+      switchView(view) {
+        this.currentView = view;
+
+        // Reset all buttons and views
+        this.nowViewBtn.classList.remove('active');
+        this.dayViewBtn.classList.remove('active');
+        this.monthViewBtn.classList.remove('active');
+        this.nowBlock.classList.remove('active');
+        this.dayView.classList.remove('active');
+        this.monthView.classList.remove('active');
+
+        if (view === 'now') {
+          this.nowViewBtn.classList.add('active');
+          this.nowBlock.classList.add('active');
+        } else if (view === 'day') {
+          this.dayViewBtn.classList.add('active');
+          this.dayView.classList.add('active');
+          this.renderDayView();
+        } else if (view === 'month') {
+          this.monthViewBtn.classList.add('active');
+          this.monthView.classList.add('active');
+          this.renderMonthView();
+        }
+      }
+
+      changeMonth(delta) {
+        this.viewDateTime.setMonth(this.viewDateTime.getMonth() + delta);
+        this.renderMonthView();
+      }
+
+      renderMonthView() {
+        const d = this.viewDateTime;
+        const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
+          'July', 'August', 'September', 'October', 'November', 'December'];
+
+        this.monthTitle.textContent = `${monthNames[d.getMonth()]} ${d.getFullYear()}`;
+        this.monthDays.innerHTML = '';
+
+        const year = d.getFullYear();
+        const month = d.getMonth();
+        const firstDay = new Date(year, month, 1).getDay();
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+        const daysInPrevMonth = new Date(year, month, 0).getDate();
+
+        const today = new Date();
+        const isCurrentMonth = month === today.getMonth() && year === today.getFullYear();
+
+        // Previous month days
+        for (let i = firstDay - 1; i >= 0; i--) {
+          const day = daysInPrevMonth - i;
+          const dayEl = this.createMonthDay(day, true, false, false);
+          this.monthDays.appendChild(dayEl);
+        }
+
+        // Current month days
+        for (let day = 1; day <= daysInMonth; day++) {
+          const isToday = isCurrentMonth && day === today.getDate();
+          const dateKey = this.getDateKeyFor(year, month, day);
+          const hasNotes = this.hasDataForDate(dateKey);
+
+          const dayEl = this.createMonthDay(day, false, isToday, hasNotes);
+          dayEl.addEventListener('click', () => {
+            this.viewDateTime = new Date(year, month, day, this.viewDateTime.getHours());
+            this.updateTimeDisplay();
+            this.switchView('now');
+            this.renderNowView();
+          });
+          this.monthDays.appendChild(dayEl);
+        }
+
+        // Next month days
+        const totalCells = firstDay + daysInMonth;
+        const remainingCells = totalCells > 35 ? 42 - totalCells : 35 - totalCells;
+        for (let day = 1; day <= remainingCells; day++) {
+          const dayEl = this.createMonthDay(day, true, false, false);
+          this.monthDays.appendChild(dayEl);
+        }
+      }
+
+      createMonthDay(day, isOtherMonth, isToday, hasData) {
+        const div = document.createElement('div');
+        div.className = 'month-day';
+        if (isOtherMonth) div.classList.add('other-month');
+        if (isToday) div.classList.add('today');
+
+        const numberSpan = document.createElement('span');
+        numberSpan.className = 'month-day-number';
+        numberSpan.textContent = day;
+        div.appendChild(numberSpan);
+
+        if (hasData && !isOtherMonth) {
+          const indicator = document.createElement('div');
+          indicator.className = 'month-day-indicator';
+          const dot = document.createElement('div');
+          dot.className = 'month-day-dot';
+          indicator.appendChild(dot);
+          div.appendChild(indicator);
+        }
+
+        return div;
+      }
+
+      getDateKeyFor(year, month, day) {
+        return `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+      }
+
+      hasDataForDate(dateKey) {
+        // Check if any hour on this date has notes or events
+        for (let hour = 0; hour < 24; hour++) {
+          const hourKey = `${dateKey}-${hour}`;
+          if (this.data.notes[hourKey] || (this.data.events[hourKey] && this.data.events[hourKey].length > 0)) {
+            return true;
+          }
+        }
+        return false;
+      }
+
+      renderNowView() {
+        const hourKey = this.getHourKey();
+
+        // Load saved text for this hour
+        this.nowTextarea.value = this.data.notes[hourKey] || '';
+
+        // Load sidebar notes for this hour
+        this.sidebarNotes.value = (this.data.quickNotes && this.data.quickNotes[hourKey]) || '';
+
+        // Render events for this hour
+        this.nowEvents.innerHTML = '';
+        const events = this.data.events[hourKey] || [];
+        events.forEach((event, index) => {
+          const eventEl = document.createElement('div');
+          eventEl.className = `now-event ${event.color || 'dark'}`;
+          eventEl.innerHTML = `
+            <span>${event.text}</span>
+            <button class="delete-event">
+              <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+          `;
+          eventEl.querySelector('.delete-event').addEventListener('click', () => {
+            this.deleteEvent(hourKey, index);
+          });
+          this.nowEvents.appendChild(eventEl);
+        });
+      }
+
+      saveNowText() {
+        const hourKey = this.getHourKey();
+        const text = this.nowTextarea.value;
+        if (text.trim()) {
+          this.data.notes[hourKey] = text;
+        } else {
+          delete this.data.notes[hourKey];
+        }
+        this.saveData();
+      }
+
+      saveSidebarNotes() {
+        const hourKey = this.getHourKey();
+        const text = this.sidebarNotes.value;
+        if (!this.data.quickNotes) this.data.quickNotes = {};
+        if (text.trim()) {
+          this.data.quickNotes[hourKey] = text;
+        } else {
+          delete this.data.quickNotes[hourKey];
+        }
+        this.saveData();
+      }
+
+      renderDayView() {
+        this.dayView.innerHTML = '';
+        const dateKey = this.getDateKey();
+        const currentHour = new Date().getHours();
+        const isToday = this.getDateKey() === this.getTodayKey();
+
+        for (let hour = 0; hour < 24; hour++) {
+          const hourKey = `${dateKey}-${hour}`;
+          const row = document.createElement('div');
+          row.className = 'hour-row';
+          if (isToday && hour === currentHour) {
+            row.classList.add('current');
+          }
+
+          const displayHour = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
+          const period = hour >= 12 ? 'PM' : 'AM';
+
+          row.innerHTML = `
+            <div class="hour-label">${displayHour} ${period}</div>
+            <div class="hour-content" data-hour="${hour}"></div>
+          `;
+
+          const content = row.querySelector('.hour-content');
+
+          // Add main notes as event block (from main textarea)
+          if (this.data.notes[hourKey]) {
+            const noteText = this.data.notes[hourKey];
+            // Get first line or truncate for display
+            const displayText = noteText.split('\n')[0].substring(0, 50) + (noteText.length > 50 ? '...' : '');
+            const eventEl = document.createElement('div');
+            eventEl.className = 'hour-event dark';
+            eventEl.innerHTML = `<span>${displayText}</span>`;
+            eventEl.style.cursor = 'pointer';
+            eventEl.addEventListener('click', (e) => {
+              e.stopPropagation();
+              this.viewDateTime.setHours(hour);
+              this.updateTimeDisplay();
+              this.switchView('now');
+              this.renderNowView();
+            });
+            content.appendChild(eventEl);
+          }
+
+          // Add quick note indicator (from sidebar) - only if quickNotes exist
+          if (this.data.quickNotes && this.data.quickNotes[hourKey]) {
+            const noteIndicator = document.createElement('div');
+            noteIndicator.className = 'hour-event gold';
+            noteIndicator.innerHTML = `<span>📝 Note</span>`;
+            noteIndicator.style.cursor = 'pointer';
+            noteIndicator.addEventListener('click', (e) => {
+              e.stopPropagation();
+              this.viewDateTime.setHours(hour);
+              this.updateTimeDisplay();
+              this.switchView('now');
+              this.renderNowView();
+            });
+            content.appendChild(noteIndicator);
+          }
+
+          // Click to jump to that hour
+          content.addEventListener('click', (e) => {
+            if (e.target === content) {
+              this.viewDateTime.setHours(hour);
+              this.updateTimeDisplay();
+              this.switchView('now');
+              this.renderNowView();
+            }
+          });
+
+          this.dayView.appendChild(row);
+        }
+
+        // Scroll to current hour
+        if (isToday) {
+          const currentRow = this.dayView.querySelector('.current');
+          if (currentRow) {
+            setTimeout(() => {
+              currentRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 100);
+          }
+        }
+      }
+
+      getTodayKey() {
+        const d = new Date();
+        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+      }
+
+      showHourInput(container, hourKey) {
+        // Remove existing input
+        const existing = container.querySelector('.hour-input');
+        if (existing) existing.remove();
+
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.className = 'hour-input';
+        input.placeholder = 'Add event...';
+        container.appendChild(input);
+        input.focus();
+
+        input.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter' && input.value.trim()) {
+            this.addEvent(hourKey, input.value.trim());
+            input.remove();
+            this.renderDayView();
+          } else if (e.key === 'Escape') {
+            input.remove();
+          }
+        });
+
+        input.addEventListener('blur', () => {
+          setTimeout(() => input.remove(), 100);
+        });
+      }
+
+      addEvent(hourKey, text, color = 'dark') {
+        if (!this.data.events[hourKey]) {
+          this.data.events[hourKey] = [];
+        }
+        this.data.events[hourKey].push({ text, color });
+        this.saveData();
+      }
+
+      deleteEvent(hourKey, index) {
+        if (this.data.events[hourKey]) {
+          this.data.events[hourKey].splice(index, 1);
+          if (this.data.events[hourKey].length === 0) {
+            delete this.data.events[hourKey];
+          }
+          this.saveData();
+          this.renderNowView();
+        }
+      }
+    }
+
+    // Initialize when DOM is ready
+    document.addEventListener('DOMContentLoaded', () => {
+      new BalanceChart();
+      new ChecklistManager();
+      new DailySchedule();
+    });
+  </script>
+</body>
+</html>
