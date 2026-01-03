@@ -1317,6 +1317,89 @@
         height: 140px;
       }
     }
+
+    /* Weekly Calendar - Constants View */
+    .weekly-constants {
+      margin-bottom: 30px;
+      animation: fadeSlideIn 0.8s ease-out;
+    }
+
+    .weekly-constants h2 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.1rem;
+      font-weight: 500;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--text-secondary);
+      margin-bottom: 20px;
+      text-align: center;
+    }
+
+    .week-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 12px;
+    }
+
+    .day-box {
+      background: var(--off-white);
+      border: 1px solid var(--warm-gray);
+      border-radius: 8px;
+      padding: 16px 12px;
+      min-height: 140px;
+      display: flex;
+      flex-direction: column;
+      transition: all 0.2s ease;
+    }
+
+    .day-box:hover {
+      border-color: var(--accent);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    }
+
+    .day-box-header {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 0.85rem;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-secondary);
+      margin-bottom: 12px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--warm-gray);
+      text-align: center;
+    }
+
+    .day-box-content {
+      flex: 1;
+      font-size: 0.8rem;
+      color: var(--text-primary);
+      line-height: 1.5;
+      white-space: pre-wrap;
+      overflow-y: auto;
+    }
+
+    .day-box-content:focus {
+      outline: none;
+    }
+
+    @media (max-width: 1200px) {
+      .week-grid {
+        grid-template-columns: repeat(4, 1fr);
+      }
+    }
+
+    @media (max-width: 768px) {
+      .week-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 480px) {
+      .week-grid {
+        grid-template-columns: 1fr;
+      }
+    }
   </style>
 </head>
 <body>
@@ -1358,6 +1441,41 @@
         <p class="month-label" id="month-label"></p>
       </section>
     </header>
+
+    <!-- Weekly Constants - Gym/Diet Reference -->
+    <section class="weekly-constants">
+      <h2>Weekly Constants</h2>
+      <div class="week-grid">
+        <div class="day-box">
+          <div class="day-box-header">Monday</div>
+          <div class="day-box-content" contenteditable="true" data-day="monday"></div>
+        </div>
+        <div class="day-box">
+          <div class="day-box-header">Tuesday</div>
+          <div class="day-box-content" contenteditable="true" data-day="tuesday"></div>
+        </div>
+        <div class="day-box">
+          <div class="day-box-header">Wednesday</div>
+          <div class="day-box-content" contenteditable="true" data-day="wednesday"></div>
+        </div>
+        <div class="day-box">
+          <div class="day-box-header">Thursday</div>
+          <div class="day-box-content" contenteditable="true" data-day="thursday"></div>
+        </div>
+        <div class="day-box">
+          <div class="day-box-header">Friday</div>
+          <div class="day-box-content" contenteditable="true" data-day="friday"></div>
+        </div>
+        <div class="day-box">
+          <div class="day-box-header">Saturday</div>
+          <div class="day-box-content" contenteditable="true" data-day="saturday"></div>
+        </div>
+        <div class="day-box">
+          <div class="day-box-header">Sunday</div>
+          <div class="day-box-content" contenteditable="true" data-day="sunday"></div>
+        </div>
+      </div>
+    </section>
 
     <!-- Daily Schedule - Full Width -->
     <section class="daily-schedule">
@@ -2467,11 +2585,55 @@
       }
     }
 
+    // Weekly Constants Manager - for static gym/diet schedules
+    class WeeklyConstants {
+      constructor() {
+        this.storageKey = 'weeklyConstants';
+        this.dayBoxes = document.querySelectorAll('.day-box-content');
+        this.loadData();
+        this.bindEvents();
+      }
+
+      loadData() {
+        const saved = localStorage.getItem(this.storageKey);
+        if (saved) {
+          const data = JSON.parse(saved);
+          this.dayBoxes.forEach(box => {
+            const day = box.dataset.day;
+            if (data[day]) {
+              box.textContent = data[day];
+            }
+          });
+        }
+      }
+
+      saveData() {
+        const data = {};
+        this.dayBoxes.forEach(box => {
+          const day = box.dataset.day;
+          data[day] = box.textContent;
+        });
+        localStorage.setItem(this.storageKey, JSON.stringify(data));
+      }
+
+      bindEvents() {
+        this.dayBoxes.forEach(box => {
+          box.addEventListener('blur', () => this.saveData());
+          box.addEventListener('input', () => {
+            // Debounced save
+            clearTimeout(this.saveTimeout);
+            this.saveTimeout = setTimeout(() => this.saveData(), 500);
+          });
+        });
+      }
+    }
+
     // Initialize when DOM is ready
     document.addEventListener('DOMContentLoaded', () => {
       new BalanceChart();
       new ChecklistManager();
       new DailySchedule();
+      new WeeklyConstants();
     });
   </script>
 </body>
